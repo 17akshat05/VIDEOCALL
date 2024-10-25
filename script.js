@@ -71,19 +71,45 @@ function addVideoStream(video, stream) {
   videoGrid.append(video);
 }
 
-// Toggle audio on and off
+// Firebase and PeerJS setup as before...
+
+// Toggle audio on and off with reliable functionality
 function toggleAudio() {
-  const enabled = myStream.getAudioTracks()[0].enabled;
-  myStream.getAudioTracks()[0].enabled = !enabled;
-  document.getElementById('toggleAudio').textContent = enabled ? 'Unmute Audio' : 'Mute Audio';
+  const audioTrack = myStream.getAudioTracks()[0];
+  if (audioTrack) {
+    audioTrack.enabled = !audioTrack.enabled;
+    document.getElementById('toggleAudio').textContent = audioTrack.enabled ? 'Mute Audio' : 'Unmute Audio';
+  }
 }
 
-// Toggle video on and off
+// Toggle video on and off with reliable functionality
 function toggleVideo() {
-  const enabled = myStream.getVideoTracks()[0].enabled;
-  myStream.getVideoTracks()[0].enabled = !enabled;
-  document.getElementById('toggleVideo').textContent = enabled ? 'Unmute Video' : 'Mute Video';
+  const videoTrack = myStream.getVideoTracks()[0];
+  if (videoTrack) {
+    videoTrack.enabled = !videoTrack.enabled;
+    document.getElementById('toggleVideo').textContent = videoTrack.enabled ? 'Mute Video' : 'Unmute Video';
+  }
 }
+
+// Function to handle adding video stream
+function addVideoStream(video, stream) {
+  video.srcObject = stream;
+  video.addEventListener('loadedmetadata', () => video.play());
+  videoGrid.append(video);
+}
+
+// Ensure media devices are correctly initialized
+navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+  .then((stream) => {
+    myStream = stream;
+    addVideoStream(myVideo, stream);
+    setupPeerConnections();
+  })
+  .catch((error) => console.error('Error accessing media devices:', error));
+
+// Function to set up peer connections, calling, and room management...
+// This will include Firebase room setup and peer connection as in the previous example.
+
 
 // Share invite link
 function shareInviteLink() {
