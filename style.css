@@ -6,6 +6,7 @@ body {
   background-color: #333;
   margin: 0;
 }
+
 #video-grid {
   display: flex;
   flex-wrap: wrap;
@@ -14,6 +15,7 @@ body {
   height: 80vh;
   background: #222;
 }
+
 video {
   width: 100%;
   height: auto;
