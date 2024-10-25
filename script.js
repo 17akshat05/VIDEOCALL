@@ -13,7 +13,7 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const database = firebase.database();
 
-// Initialize PeerJS
+// PeerJS setup
 const peer = new Peer(undefined, {
   host: 'peerjs-server.herokuapp.com',
   secure: true,
@@ -22,29 +22,32 @@ const peer = new Peer(undefined, {
 
 const videoGrid = document.getElementById('video-grid');
 const myVideo = document.createElement('video');
-myVideo.muted = true;  // Mute your own video
+myVideo.muted = true;
+
+let myStream;
 
 // Access user's video and audio stream
 navigator.mediaDevices.getUserMedia({ video: true, audio: true }).then((stream) => {
+  myStream = stream;
   addVideoStream(myVideo, stream);
 
-  // Handle incoming calls from other users
+  // Handle incoming calls
   peer.on('call', (call) => {
-    call.answer(stream);  // Answer the call with our stream
+    call.answer(stream);
     const video = document.createElement('video');
     call.on('stream', (userVideoStream) => addVideoStream(video, userVideoStream));
   });
 
-  // Open connection to Firebase once PeerJS ID is ready
+  // Initialize room and user management in Firebase
   peer.on('open', (id) => {
-    const roomId = "test-room";  // Static room ID (can be dynamic)
+    const roomId = "test-room";  // Static room ID for testing
     const userRef = database.ref(`${roomId}/${id}`);
     userRef.set(id);
 
     // Remove user from Firebase on disconnect
     userRef.onDisconnect().remove();
 
-    // Listen for new users in the room and connect
+    // Listen for new users in the room
     database.ref(roomId).on('value', (snapshot) => {
       const users = snapshot.val();
       Object.keys(users).forEach((userId) => {
@@ -56,7 +59,7 @@ navigator.mediaDevices.getUserMedia({ video: true, audio: true }).then((stream) 
 
 // Connect to a new user by calling them
 function connectToNewUser(userId, stream) {
-  const call = peer.call(userId, stream);  // Initiate call with new user
+  const call = peer.call(userId, stream);
   const video = document.createElement('video');
   call.on('stream', (userVideoStream) => addVideoStream(video, userVideoStream));
 }
@@ -66,4 +69,29 @@ function addVideoStream(video, stream) {
   video.srcObject = stream;
   video.addEventListener('loadedmetadata', () => video.play());
   videoGrid.append(video);
+}
+
+// Toggle audio on and off
+function toggleAudio() {
+  const enabled = myStream.getAudioTracks()[0].enabled;
+  myStream.getAudioTracks()[0].enabled = !enabled;
+  document.getElementById('toggleAudio').textContent = enabled ? 'Unmute Audio' : 'Mute Audio';
+}
+
+// Toggle video on and off
+function toggleVideo() {
+  const enabled = myStream.getVideoTracks()[0].enabled;
+  myStream.getVideoTracks()[0].enabled = !enabled;
+  document.getElementById('toggleVideo').textContent = enabled ? 'Unmute Video' : 'Mute Video';
+}
+
+// Share invite link
+function shareInviteLink() {
+  const roomId = "test-room";  // Static room ID (can be made dynamic)
+  const inviteLink = `${window.location.origin}?room=${roomId}`;
+  navigator.clipboard.writeText(inviteLink).then(() => {
+    alert('Invite link copied to clipboard!');
+  }).catch(() => {
+    alert('Failed to copy invite link.');
+  });
 }
